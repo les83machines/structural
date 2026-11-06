@@ -174,7 +174,23 @@ function loadLevel(n){
   goal={x:last[0],y:last[1],z:last[2]};
   player={seg:0,t:0,fall:0,transition:null,visited:[0],endpointWait:0};
   trail.length=0;
-  angle=0;pitch=0;
+  // Randomize the camera, but reject views that already solve the first
+  // endpoint connection. The ball always begins at t=0 on the first path.
+  for(let attempt=0;attempt<100;attempt++){
+    angle=(Math.random()*2-1)*Math.PI;
+    pitch=(Math.random()*2-1)*0.42;
+    const endpoint=segs[0].b;
+    const screenEnd=project([endpoint[0],endpoint[1]+15,endpoint[2]]);
+    let alreadySolved=false;
+    for(let i=1;i<segs.length;i++){
+      const start=segs[i].a;
+      const screenStart=project([start[0],start[1]+15,start[2]]);
+      if(Math.hypot(screenEnd.x-screenStart.x,screenEnd.y-screenStart.y)<=26*scale){
+        alreadySolved=true;break;
+      }
+    }
+    if(!alreadySolved)break;
+  }
   won=false;
   document.querySelector('#ui h1').textContent='STRUCTURAL / 0'+n;
   status.textContent='LEVEL '+n+' · H 0° · V 0°';
@@ -504,8 +520,12 @@ document.getElementById('exportBtn').onclick=()=>{
   const textWidth=shotCtx.measureText(readout).width;
   const rx=Math.max(24,W-textWidth-24);
   shotCtx.fillText(readout,rx,H-34);
+  shotCtx.globalAlpha=.48;
+  shotCtx.font='10px Arial, sans-serif';
+  shotCtx.letterSpacing='1px';
+  shotCtx.fillText('CREATED BY LES83MACHINES.COM',rx,H-16);
   shotCtx.globalAlpha=.28;
-  shotCtx.fillRect(rx,H-50,textWidth,1);
+  shotCtx.fillRect(rx,H-50,Math.max(textWidth,shotCtx.measureText('CREATED BY LES83MACHINES.COM').width),1);
   shotCtx.restore();
 
   const jpg=shot.toDataURL('image/jpeg',0.94);
